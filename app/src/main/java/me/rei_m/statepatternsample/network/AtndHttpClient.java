@@ -8,6 +8,8 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.ArrayList;
+import java.util.List;
 
 import me.rei_m.statepatternsample.entity.AtndEventEntity;
 import okhttp3.CacheControl;
@@ -18,7 +20,8 @@ import rx.Observable;
 
 public class AtndHttpClient {
 
-    public Observable<AtndEventEntity> fetchEvent() {
+    public Observable<List<AtndEventEntity>> fetchEvent() {
+
         // リクエストのURLを作成.
         final HttpUrl url = new HttpUrl.Builder()
                 .scheme("https")
@@ -43,10 +46,12 @@ public class AtndHttpClient {
                         int eventCount = responseJson.getInt("results_returned");
                         if (0 < eventCount) {
                             JSONArray events = responseJson.getJSONArray("events");
+                            List<AtndEventEntity> eventEntityList = new ArrayList<AtndEventEntity>();
                             for (int i = 0; i < eventCount - 1; i++) {
                                 JSONObject event = events.getJSONObject(i).getJSONObject("event");
-                                subscriber.onNext(new AtndEventEntity(event.getInt("event_id"), event.getString("title")));
+                                eventEntityList.add(new AtndEventEntity(event.getInt("event_id"), event.getString("title")));
                             }
+                            subscriber.onNext(eventEntityList);
                         }
                     } catch (JSONException e) {
                         subscriber.onError(e);

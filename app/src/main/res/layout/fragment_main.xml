@@ -4,10 +4,23 @@
     android:layout_height="match_parent"
     tools:context="me.rei_m.statepatternsample.fragment.MainFragment">
 
-    <!-- TODO: Update blank fragment layout -->
+    <ListView
+        android:id="@+id/list_atnd_event"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <TextView
+        android:id="@+id/text_list_atnd_empty"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:gravity="center"
+        android:text="空だよ" />
+
+    <TextView
+        android:id="@+id/text_list_atnd_error"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="エラーだよ" />
 
 </FrameLayout>
