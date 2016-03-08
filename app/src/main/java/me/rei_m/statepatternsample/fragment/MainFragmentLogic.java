@@ -12,14 +12,13 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import me.rei_m.statepatternsample.R;
 import me.rei_m.statepatternsample.event.RxBusProvider;
-import me.rei_m.statepatternsample.fragment.state.AbsMainFragmentState;
 import me.rei_m.statepatternsample.manager.ModelLocator;
 import me.rei_m.statepatternsample.model.AtndModel;
 import me.rei_m.statepatternsample.view.adaptor.AtndEventListAdapter;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.subscriptions.CompositeSubscription;
 
-public class MainFragment extends Fragment {
+public class MainFragmentLogic extends Fragment {
 
     @Bind(R.id.list_atnd_event)
     ListView listAtndEvent;
@@ -32,12 +31,12 @@ public class MainFragment extends Fragment {
 
     private CompositeSubscription compositeSubscription;
 
-    public MainFragment() {
+    public MainFragmentLogic() {
         // Required empty public constructor
     }
 
-    public static MainFragment newInstance() {
-        MainFragment fragment = new MainFragment();
+    public static MainFragmentLogic newInstance() {
+        MainFragmentLogic fragment = new MainFragmentLogic();
         Bundle args = new Bundle();
         fragment.setArguments(args);
         return fragment;
