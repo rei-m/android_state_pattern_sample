@@ -1,36 +1,15 @@
 package me.rei_m.statepatternsample.fragment;
 
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ListView;
-import android.widget.TextView;
 
-import butterknife.Bind;
-import butterknife.ButterKnife;
-import me.rei_m.statepatternsample.R;
-import me.rei_m.statepatternsample.event.RxBusProvider;
-import me.rei_m.statepatternsample.fragment.state.AbsMainFragmentState;
-import me.rei_m.statepatternsample.manager.ModelLocator;
-import me.rei_m.statepatternsample.model.AtndModel;
-import me.rei_m.statepatternsample.view.adaptor.AtndEventListAdapter;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.subscriptions.CompositeSubscription;
+import me.rei_m.statepatternsample.fragment.state.MainFragmentState;
 
-public class MainFragment extends Fragment {
+public class MainFragment extends MainFragmentLogic {
 
-    @Bind(R.id.list_atnd_event)
-    ListView listAtndEvent;
-
-    @Bind(R.id.text_list_atnd_empty)
-    TextView emptyView;
-
-    @Bind(R.id.text_list_atnd_error)
-    TextView errorView;
-
-    private CompositeSubscription compositeSubscription;
+    private MainFragmentState state = MainFragmentState.INIT;
 
     public MainFragment() {
         // Required empty public constructor
@@ -43,70 +22,65 @@ public class MainFragment extends Fragment {
         return fragment;
     }
 
+    public void next(MainFragmentState nextState) {
+        state.exit(this);
+        state = nextState;
+        state.entry(this);
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        state.onCreate(this, savedInstanceState);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
-        View view = inflater.inflate(R.layout.fragment_main, container, false);
-
-        ButterKnife.bind(this, view);
-
-        AtndEventListAdapter listAdapter = new AtndEventListAdapter(getContext(), R.layout.list_item_atnd_event);
-        listAtndEvent.setAdapter(listAdapter);
-
-        emptyView.setVisibility(View.GONE);
-
-        errorView.setVisibility(View.GONE);
-
+        View view = super.onCreateView(inflater, container, savedInstanceState);
+        state.onCreateView(this, savedInstanceState);
         return view;
     }
 
     @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        ButterKnife.unbind(this);
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        state.onActivityCreated(this, savedInstanceState);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        state.onStart(this);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        compositeSubscription = new CompositeSubscription();
-        compositeSubscription.add(RxBusProvider.INSTANCE.get()
-                .toObservable()
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(o -> {
-                    if (o instanceof AtndModel.AtndEventLoadedEvent) {
-                        AtndModel.AtndEventLoadedEvent event = (AtndModel.AtndEventLoadedEvent) o;
-                        if (event.isSuccess()) {
-                            displayContents();
-                        } else {
-                            errorView.setVisibility(View.VISIBLE);
-                        }
-                    }
-                }));
-        ((AtndModel) ModelLocator.get(ModelLocator.Tag.ATND)).fetch();
+        state.onResume(this);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        compositeSubscription.unsubscribe();
+        state.onPause(this);
     }
 
-    private void displayContents() {
-        AtndModel atndModel = ((AtndModel) ModelLocator.get(ModelLocator.Tag.ATND));
+    @Override
+    public void onStop() {
+        super.onStop();
+        state.onPause(this);
+    }
 
-        if (0 < atndModel.getEventCount()) {
-            AtndEventListAdapter listAdapter = (AtndEventListAdapter) listAtndEvent.getAdapter();
-            listAdapter.clear();
-            listAdapter.addAll(atndModel.getAtndEventList());
-            listAdapter.notifyDataSetChanged();
-        } else {
-            emptyView.setVisibility(View.VISIBLE);
-        }
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        state.onDestroyView(this);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        state.onDestroy(this);
     }
 }
+
