@@ -1,5 +1,6 @@
 package me.rei_m.statepatternsample.fragment;
 
+import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -18,7 +19,7 @@ import me.rei_m.statepatternsample.view.adaptor.AtndEventListAdapter;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.subscriptions.CompositeSubscription;
 
-public class MainFragmentLogic extends Fragment {
+abstract public class MainFragmentLogic extends Fragment {
 
     @Bind(R.id.list_atnd_event)
     ListView listAtndEvent;
@@ -31,20 +32,12 @@ public class MainFragmentLogic extends Fragment {
 
     private CompositeSubscription compositeSubscription;
 
+    private ProgressDialog progressDialog;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
         View view = inflater.inflate(R.layout.fragment_main, container, false);
-
         ButterKnife.bind(this, view);
-
-        AtndEventListAdapter listAdapter = new AtndEventListAdapter(getContext(), R.layout.list_item_atnd_event);
-        listAtndEvent.setAdapter(listAdapter);
-
-        emptyView.setVisibility(View.GONE);
-
-        errorView.setVisibility(View.GONE);
-
         return view;
     }
 
@@ -55,41 +48,60 @@ public class MainFragmentLogic extends Fragment {
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
+    public void onPause() {
+        super.onPause();
+        if (compositeSubscription != null) {
+            compositeSubscription.unsubscribe();
+            compositeSubscription = null;
+        }
+    }
+
+    public void initView() {
+        AtndEventListAdapter listAdapter = new AtndEventListAdapter(getContext(), R.layout.list_item_atnd_event);
+        listAtndEvent.setAdapter(listAdapter);
+        emptyView.setVisibility(View.GONE);
+        errorView.setVisibility(View.GONE);
+    }
+
+    public void fetchEvent() {
         compositeSubscription = new CompositeSubscription();
         compositeSubscription.add(RxBusProvider.INSTANCE.get()
                 .toObservable()
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(o -> {
-                    if (o instanceof AtndModel.AtndEventLoadedEvent) {
-                        AtndModel.AtndEventLoadedEvent event = (AtndModel.AtndEventLoadedEvent) o;
-                        if (event.isSuccess()) {
-                            displayContents();
-                        } else {
-                            errorView.setVisibility(View.VISIBLE);
-                        }
-                    }
-                }));
+                .subscribe(this::subscribe));
         ((AtndModel) ModelLocator.get(ModelLocator.Tag.ATND)).fetch();
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        compositeSubscription.unsubscribe();
+    public void showProgressDialog() {
+        progressDialog = new ProgressDialog(getActivity());
+        progressDialog.setCancelable(false);
+        progressDialog.show();
     }
 
-    private void displayContents() {
-        AtndModel atndModel = ((AtndModel) ModelLocator.get(ModelLocator.Tag.ATND));
+    public void hideProgressDialog() {
+        progressDialog.dismiss();
+    }
 
-        if (0 < atndModel.getEventCount()) {
-            AtndEventListAdapter listAdapter = (AtndEventListAdapter) listAtndEvent.getAdapter();
-            listAdapter.clear();
-            listAdapter.addAll(atndModel.getAtndEventList());
-            listAdapter.notifyDataSetChanged();
-        } else {
-            emptyView.setVisibility(View.VISIBLE);
-        }
+    abstract public void subscribe(Object o);
+
+    public void displayContents() {
+        AtndModel atndModel = ((AtndModel) ModelLocator.get(ModelLocator.Tag.ATND));
+        AtndEventListAdapter listAdapter = (AtndEventListAdapter) listAtndEvent.getAdapter();
+        listAdapter.clear();
+        listAdapter.addAll(atndModel.getAtndEventList());
+        listAdapter.notifyDataSetChanged();
+    }
+
+    public void displayEmptyMessage() {
+        emptyView.setVisibility(View.VISIBLE);
+    }
+
+    public void displayErrorMessage() {
+        errorView.setVisibility(View.VISIBLE);
+    }
+
+    public boolean hasEventData() {
+        AtndModel atndModel = ((AtndModel) ModelLocator.get(ModelLocator.Tag.ATND));
+        return (0 < atndModel.getEventCount());
     }
 }

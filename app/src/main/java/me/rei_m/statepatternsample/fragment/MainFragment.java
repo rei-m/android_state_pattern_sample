@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import me.rei_m.statepatternsample.fragment.state.MainFragmentState;
+import me.rei_m.statepatternsample.model.AtndModel;
 
 public class MainFragment extends MainFragmentLogic {
 
@@ -68,7 +69,7 @@ public class MainFragment extends MainFragmentLogic {
     @Override
     public void onStop() {
         super.onStop();
-        state.onPause(this);
+        state.onStop(this);
     }
 
     @Override
@@ -81,6 +82,13 @@ public class MainFragment extends MainFragmentLogic {
     public void onDestroy() {
         super.onDestroy();
         state.onDestroy(this);
+    }
+
+    @Override
+    public void subscribe(Object o) {
+        if (o instanceof AtndModel.AtndEventLoadedEvent) {
+            state.subscribe(this, (AtndModel.AtndEventLoadedEvent) o);
+        }
     }
 }
 
