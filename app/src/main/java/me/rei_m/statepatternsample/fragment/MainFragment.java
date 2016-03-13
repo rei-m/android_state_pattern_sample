@@ -10,17 +10,17 @@ import me.rei_m.statepatternsample.model.AtndModel;
 
 public class MainFragment extends MainFragmentLogic {
 
-    private MainFragmentState state = MainFragmentState.INIT;
-
-    public MainFragment() {
-        // Required empty public constructor
-    }
-
     public static MainFragment newInstance() {
         MainFragment fragment = new MainFragment();
         Bundle args = new Bundle();
         fragment.setArguments(args);
         return fragment;
+    }
+    
+    private MainFragmentState state = MainFragmentState.INIT;
+
+    public MainFragment() {
+        // Required empty public constructor
     }
 
     public void next(MainFragmentState nextState) {
